@@ -1,26 +1,39 @@
-name: Simple CI/CD
+name: CI/CD Pipeline Demo
 
 on:
   push:
-    branches: [master]
+    branches:
+      - main
+      - dev
 
 jobs:
-  build:
+  development:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "18"
-
       - name: Install dependencies
-        run: npm install
-
-      - name: Run build
-        run: npm run build
+        run: echo "Installing dependencies..."
 
       - name: Run tests
-        run: npm test
+        run: echo "Running tests..."
+
+      - name: Build project
+        run: echo "Building project..."
+
+  staging:
+    needs: development
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/dev'
+    steps:
+      - name: Deploy to Staging
+        run: echo "Deploying to STAGING server..."
+
+  production:
+    needs: development
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to Production
+        run: echo "Deploying to PRODUCTION server..."
