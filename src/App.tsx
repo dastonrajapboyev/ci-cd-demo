@@ -1,5 +1,5 @@
 const App = () => {
-  return <div>CI/CD Pipeline</div>;
+  return <div style={{ color: "red" }}>CI/CD Pipeline</div>;
 };
 
 export default App;
