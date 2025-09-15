@@ -33,7 +33,7 @@ jobs:
   production:
     needs: development
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/master'
     steps:
       - name: Deploy to Production
         run: echo "Deploying to PRODUCTION server..."
