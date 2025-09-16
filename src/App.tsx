@@ -129,7 +129,7 @@ const App: React.FC = () => {
         {/* Environment Info */}
         <div className="mt-2 text-xs text-blue-400">
           Environment:{" "}
-          {process.env.NODE_ENV === "development"
+          {import.meta.env.MODE === "development"
             ? "Development"
             : "Production"}
         </div>
