@@ -38,6 +38,153 @@
 #       - name: Deploy to Production
 #         run: echo "Deploying to PRODUCTION server..."
 
+#//////////////////////////////////////////////////////////////
+# name: CI/CD Pipeline Demo
+
+# on:
+#   push:
+#     branches:
+#       - master
+#       - dev
+
+# jobs:
+#   development:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: "18"
+#           cache: "npm"
+
+#       - name: Install dependencies
+#         run: |
+#           echo "📦 Installing dependencies..."
+#           npm ci
+
+#       - name: Run linter
+#         run: |
+#           echo "🔍 Running linter..."
+#           npm run lint || echo "Linter failed, but continuing..."
+
+#       - name: Run tests
+#         run: |
+#           echo "🧪 Running tests..."
+#           npm run test -- --run || echo "Tests completed"
+
+#       - name: Build project
+#         run: |
+#           echo "🏗️ Building project..."
+#           npm run build
+
+#       - name: Upload build artifacts
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: dist-files
+#           path: dist/
+#           retention-days: 1
+
+#       - name: Build summary
+#         run: |
+#           echo "✅ Build completed successfully!"
+#           echo "📊 Build stats:"
+#           ls -la dist/
+#           echo "Total files: $(find dist -type f | wc -l)"
+#           echo "Build size: $(du -sh dist/ | cut -f1)"
+
+#   staging:
+#     needs: development
+#     runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/dev'
+#     steps:
+#       - name: Download build artifacts
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: dist-files
+#           path: dist/
+
+#       - name: Deploy to Staging
+#         run: |
+#           echo "🚀 Deploying to STAGING server..."
+#           echo "📁 Files to deploy:"
+#           ls -la dist/
+
+#           echo "🔧 Staging deployment steps:"
+#           echo "  1. Backing up current version..."
+#           echo "  2. Uploading new files..."
+#           echo "  3. Running health checks..."
+#           echo "  4. Switching to new version..."
+
+#           echo "✅ Successfully deployed to STAGING!"
+#           echo "🌐 Staging URL: https://staging.your-domain.com"
+
+#       - name: Run staging tests
+#         run: |
+#           echo "🧪 Running staging smoke tests..."
+#           echo "  ✅ Homepage loads"
+#           echo "  ✅ Deploy counter works"
+#           echo "  ✅ All assets load correctly"
+#           echo "✅ Staging tests passed!"
+
+#   production:
+#     needs: development
+#     runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/master'
+#     steps:
+#       - name: Download build artifacts
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: dist-files
+#           path: dist/
+
+#       - name: Deploy to Production
+#         run: |
+#           echo "🚀 Deploying to PRODUCTION server..."
+#           echo "📁 Files to deploy:"
+#           ls -la dist/
+
+#           echo "🔧 Production deployment steps:"
+#           echo "  1. Creating backup..."
+#           echo "  2. Health check before deploy..."
+#           echo "  3. Blue-green deployment..."
+#           echo "  4. Updating load balancer..."
+#           echo "  5. Running final health checks..."
+
+#           echo "✅ Successfully deployed to PRODUCTION!"
+#           echo "🌐 Production URL: https://your-domain.com"
+
+#           # Deployment notification
+#           echo "📧 Sending deployment notifications..."
+#           echo "  ✅ Slack notification sent"
+#           echo "  ✅ Email notification sent"
+#           echo "  ✅ Metrics updated"
+
+#       - name: Post-deployment verification
+#         run: |
+#           echo "🔍 Running production verification..."
+#           echo "  ✅ Application health check"
+#           echo "  ✅ Database connectivity"
+#           echo "  ✅ CDN cache cleared"
+#           echo "  ✅ Performance metrics"
+#           echo "✅ Production deployment verified!"
+
+#   # Optional: Rollback job (manual trigger)
+#   rollback:
+#     runs-on: ubuntu-latest
+#     if: github.event_name == 'workflow_dispatch'
+#     steps:
+#       - name: Rollback deployment
+#         run: |
+#           echo "⏪ Rolling back to previous version..."
+#           echo "  1. Switching to backup version..."
+#           echo "  2. Running health checks..."
+#           echo "  3. Updating monitoring..."
+#           echo "✅ Rollback completed!"
+# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 name: CI/CD Pipeline Demo
 
 on:
@@ -67,12 +214,12 @@ jobs:
       - name: Run linter
         run: |
           echo "🔍 Running linter..."
-          npm run lint || echo "Linter failed, but continuing..."
+          npm run lint || echo "⚠️ Linter failed, but continuing..."
 
       - name: Run tests
         run: |
           echo "🧪 Running tests..."
-          npm run test -- --run || echo "Tests completed"
+          npm run test -- --run || echo "⚠️ Tests failed, but continuing..."
 
       - name: Build project
         run: |
@@ -86,14 +233,6 @@ jobs:
           path: dist/
           retention-days: 1
 
-      - name: Build summary
-        run: |
-          echo "✅ Build completed successfully!"
-          echo "📊 Build stats:"
-          ls -la dist/
-          echo "Total files: $(find dist -type f | wc -l)"
-          echo "Build size: $(du -sh dist/ | cut -f1)"
-
   staging:
     needs: development
     runs-on: ubuntu-latest
@@ -105,28 +244,25 @@ jobs:
           name: dist-files
           path: dist/
 
-      - name: Deploy to Staging
-        run: |
-          echo "🚀 Deploying to STAGING server..."
-          echo "📁 Files to deploy:"
-          ls -la dist/
+      - name: Deploy to Staging via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "dist/*"
+          target: "/var/www/myapp-staging"
 
-          echo "🔧 Staging deployment steps:"
-          echo "  1. Backing up current version..."
-          echo "  2. Uploading new files..."
-          echo "  3. Running health checks..."
-          echo "  4. Switching to new version..."
-
-          echo "✅ Successfully deployed to STAGING!"
-          echo "🌐 Staging URL: https://staging.your-domain.com"
-
-      - name: Run staging tests
-        run: |
-          echo "🧪 Running staging smoke tests..."
-          echo "  ✅ Homepage loads"
-          echo "  ✅ Deploy counter works"
-          echo "  ✅ All assets load correctly"
-          echo "✅ Staging tests passed!"
+      - name: Post-deploy check (Staging)
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            echo "🔍 Checking staging server..."
+            ls -la /var/www/myapp-staging
+            echo "✅ Staging deploy successful!"
 
   production:
     needs: development
@@ -139,46 +275,22 @@ jobs:
           name: dist-files
           path: dist/
 
-      - name: Deploy to Production
-        run: |
-          echo "🚀 Deploying to PRODUCTION server..."
-          echo "📁 Files to deploy:"
-          ls -la dist/
+      - name: Deploy to Production via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "dist/*"
+          target: "/var/www/myapp"
 
-          echo "🔧 Production deployment steps:"
-          echo "  1. Creating backup..."
-          echo "  2. Health check before deploy..."
-          echo "  3. Blue-green deployment..."
-          echo "  4. Updating load balancer..."
-          echo "  5. Running final health checks..."
-
-          echo "✅ Successfully deployed to PRODUCTION!"
-          echo "🌐 Production URL: https://your-domain.com"
-
-          # Deployment notification
-          echo "📧 Sending deployment notifications..."
-          echo "  ✅ Slack notification sent"
-          echo "  ✅ Email notification sent"
-          echo "  ✅ Metrics updated"
-
-      - name: Post-deployment verification
-        run: |
-          echo "🔍 Running production verification..."
-          echo "  ✅ Application health check"
-          echo "  ✅ Database connectivity"
-          echo "  ✅ CDN cache cleared"
-          echo "  ✅ Performance metrics"
-          echo "✅ Production deployment verified!"
-
-  # Optional: Rollback job (manual trigger)
-  rollback:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
-    steps:
-      - name: Rollback deployment
-        run: |
-          echo "⏪ Rolling back to previous version..."
-          echo "  1. Switching to backup version..."
-          echo "  2. Running health checks..."
-          echo "  3. Updating monitoring..."
-          echo "✅ Rollback completed!"
+      - name: Post-deploy check (Production)
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            echo "🔍 Checking production server..."
+            ls -la /var/www/myapp
+            echo "✅ Production deploy successful!"
